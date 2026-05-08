@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BSIT 1st Year — Student Record System</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{font-family:'DM Sans',sans-serif;background:#fff5f5;color:#1a1f36;}
+.screen{display:none;}
+.screen.active{display:block;}
+.topbar{height:5px;background:linear-gradient(90deg,#8b0000,#c0152a,#e63950);position:fixed;top:0;left:0;right:0;z-index:999;}
+.page-header{background:linear-gradient(135deg,#c0152a,#e63950);color:white;padding:22px 32px;display:flex;align-items:center;gap:14px;margin-bottom:28px;}
+.page-header-icon{width:46px;height:46px;background:rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.page-header h2{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;}
+.page-header p{font-size:13px;opacity:.85;}
+.page-content{padding:0 32px 40px;}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(192,21,42,.08);padding:28px;}
+.form-group{margin-bottom:18px;}
+label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;}
+.required{color:#c0152a;}
+input[type=text],input[type=number],select{width:100%;padding:10px 14px;border:1.5px solid #ffd0d0;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;background:#fff8f8;outline:none;transition:border-color .2s;}
+input[type=text]:focus,input[type=number]:focus,select:focus{border-color:#c0152a;background:#fff;}
+input[readonly]{background:#fff0f0;cursor:not-allowed;color:#c0152a;font-weight:600;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:600px){.two-col{grid-template-columns:1fr;}}
+.sec-label{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#c0152a;text-transform:uppercase;margin:24px 0 14px;padding-bottom:8px;border-bottom:2px solid #c0152a;}
+.grade-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:600px){.grade-grid{grid-template-columns:1fr;}}
+.subj-code{font-size:13px;font-weight:700;margin-bottom:2px;}
+.subj-name{font-size:11px;color:#6b7280;margin-bottom:4px;}
+.units-b{display:inline-block;font-size:10px;background:#ffe8e8;color:#c0152a;border-radius:4px;padding:1px 7px;font-weight:700;margin-bottom:6px;}
+.btn{padding:11px 22px;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .2s;}
+.btn-primary{background:#c0152a;color:#fff;}
+.btn-primary:hover{background:#8b0000;}
+.btn-success{background:#00b894;color:#fff;}
+.btn-success:hover{background:#00a381;}
+.btn-danger{background:#e74c3c;color:#fff;}
+.btn-danger:hover{background:#c0392b;}
+.btn-outline{background:#fff;color:#1a1f36;border:1.5px solid #ffd0d0;}
+.btn-outline:hover{border-color:#c0152a;color:#c0152a;}
+.btn-row{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:14px;}
+thead tr{background:#c0152a;}
+th{padding:12px 16px;text-align:left;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#fff;white-space:nowrap;}
+td{padding:12px 16px;border-bottom:1px solid #ffd0d0;}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:#fff5f5;}
+.badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-passed{background:#d4edda;color:#155724;}
+.badge-failed{background:#f8d7da;color:#721c24;}
+.badge-na{background:#e9ecef;color:#495057;}
+.gwa-box{background:linear-gradient(135deg,#c0152a,#e63950);color:#fff;border-radius:14px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.gwa-num{font-family:'Syne',sans-serif;font-size:42px;font-weight:800;line-height:1;}
+.gwa-lbl{font-size:12px;opacity:.8;margin-bottom:4px;}
+.gwa-rem{font-size:18px;font-weight:700;background:rgba(255,255,255,.2);padding:6px 18px;border-radius:24px;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;}
+.info-block{background:#fff8f8;border:1.5px solid #ffd0d0;border-radius:8px;padding:14px;}
+.info-lbl{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;}
+.info-val{font-size:15px;font-weight:600;}
+.search-bar{display:flex;gap:10px;margin-bottom:20px;}
+.search-bar input{flex:1;}
+.empty{padding:60px 20px;text-align:center;color:#6b7280;}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:.4;}
+.warn-box{background:#fff3cd;border:1.5px solid #ffc107;border-radius:8px;padding:14px 18px;display:flex;align-items:center;gap:10px;font-size:14px;color:#856404;font-weight:500;margin-top:10px;}
+.prog-banner{background:linear-gradient(135deg,#c0152a,#e63950);color:#fff;border-radius:10px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;}
+#toast{position:fixed;bottom:28px;right:28px;padding:14px 22px;border-radius:8px;font-size:14px;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,.18);transform:translateY(80px);opacity:0;transition:all .3s;z-index:9999;max-width:320px;color:#fff;}
+#toast.show{transform:translateY(0);opacity:1;}
+#toast.ts{background:#00b894;}
+#toast.te{background:#e74c3c;}
+#screen-menu{background:#fff;min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px;}
+#screen-menu.active{display:flex;}
+.m-logo{width:90px;height:90px;background:linear-gradient(135deg,#c0152a,#e63950);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 18px;box-shadow:0 8px 28px rgba(192,21,42,.3);border:4px solid #fff;outline:3px solid #e63950;}
+.m-title{font-family:'Syne',sans-serif;font-size:clamp(22px,4vw,36px);font-weight:800;color:#c0152a;text-align:center;margin-bottom:6px;}
+.m-sub{font-size:15px;color:#888;text-align:center;margin-bottom:44px;}
+.m-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:840px;width:100%;}
+@media(max-width:600px){.m-grid{grid-template-columns:repeat(2,1fr);}}
+.m-card{background:#fff;border:2px solid #ffd0d0;border-radius:16px;padding:26px 18px;cursor:pointer;text-align:center;color:#c0152a;box-shadow:0 2px 12px rgba(192,21,42,.07);transition:all .25s;}
+.m-card:hover{background:#c0152a;border-color:#c0152a;transform:translateY(-5px);color:#fff;}
+.m-card:hover p{color:rgba(255,255,255,.85);}
+.m-card:hover .m-icon{background:rgba(255,255,255,.2)!important;}
+.m-icon{width:58px;height:58px;background:#ffe8e8;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 14px;transition:background .25s;}
+.m-card h3{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:5px;}
+.m-card p{font-size:11px;color:#888;line-height:1.4;transition:color .25s;}
+</style>
+</head>
+<body>
+<div class="topbar"></div>
+
+<!-- MENU -->
+<div id="screen-menu" class="screen active">
+  <div class="m-logo">🎓</div>
+  <div class="m-title">BSIT STUDENT RECORD SYSTEM</div>
+  <div class="m-sub">1st Year BSIT - Bachelor of Scince in Information Technology</div>
+  <div class="m-grid">
+    <div class="m-card" onclick="goTo('list')"><div class="m-icon">👥</div><h3>STUDENT LIST</h3><p>View and search all students</p></div>
+    <div class="m-card" onclick="goTo('add')"><div class="m-icon">➕</div><h3>ADD STUDENT</h3><p>Register a new student</p></div>
+    <div class="m-card" onclick="goTo('record-search')"><div class="m-icon">📋</div><h3>STUDENT'S RECORD</h3><p>View student details</p></div>
+    <div class="m-card" onclick="goTo('update-search')"><div class="m-icon">✏️</div><h3>UPDATE STUDENT</h3><p>Edit student information</p></div>
+    <div class="m-card" onclick="goTo('delete')"><div class="m-icon">🗑️</div><h3>DELETE STUDENT</h3><p>Remove student record</p></div>
+    <div class="m-card" onclick="exitSys()"><div class="m-icon" style="background:#f0f0f0;">🚪</div><h3>EXIT SYSTEM</h3><p>Close the application</p></div>
+  </div>
+</div>
+
+<!-- STUDENT LIST -->
+<div id="screen-list" class="screen">
+  <div style="padding-top:5px;">
+    <div class="page-header"><div class="page-header-icon">👥</div><div><h2>STUDENT LIST</h2><p>All 1st Year BSIT Students</p></div></div>
+    <div class="page-content">
+      <div class="search-bar">
+        <input type="text" id="list-search" placeholder="🔍 Search by name or student ID…" oninput="filterList()">
+        <button class="btn btn-outline" onclick="filterList()">Search</button>
+      </div>
+      <div class="card" style="padding:0;">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Student ID</th><th>Name</th><th>Section</th><th>GWA</th><th>Remarks</th><th>Actions</th></tr></thead>
+            <tbody id="list-tbody"><tr><td colspan="7"><div class="empty"><div class="empty-icon">👤</div><p>No students yet.</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-success" onclick="exportExcel()">📊 Export to Excel</button>
+        <button class="btn btn-outline" onclick="goTo('menu')">← Back to Main Menu</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD STUDENT -->
+<div id="screen-add" class="screen">
+  <div style="padding-top:5px;">
+    <div class="page-header"><div class="page-header-icon">➕</div><div><h2>ADD STUDENT</h2><p>Register a new 1st Year BSIT student</p></div></div>
+    <div class="page-content">
+      <div class="card">
+        <div class="prog-banner">
+          <div style="font-size:28px;">🎓</div>
+          <div><div style="font-weight:700;font-size:15px;">BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY</div><div style="font-size:12px;opacity:.85;">1st Year — A.Y. 2025-2026</div></div>
+        </div>
+        <div class="two-col">
+          <div class="form-group"><label>Full Name (SN, FN MI)<span class="required"> *</span></label><input type="text" id="add-name" placeholder="Enter full name"></div>
+          <div class="form-group"><label>Student ID <span class="required">*</span></label><input type="text" id="add-id" placeholder="e.g. 25-12345"></div>
+          <div class="form-group"><label>Program</label><input type="text" value="BSIT — Bachelor of Science in Information Technology" readonly></div>
+          <div class="form-group"><label>Section <span class="required">*</span></label>
+            <select id="add-sec"><option value="">-- Select Section --</option><option value="1A">1A</option><option value="1B">1B</option><option value="1C">1C</option></select>
+          </div>
+        </div>
+        <div class="sec-label">📚 Grades in Every Subject</div>
+        <p style="font-size:12px;color:#6b7280;margin-bottom:14px;">College grading: 1.00 (Highest) – 5.00 (Failed). Leave blank if not yet graded.</p>
+        <div class="grade-grid" id="add-gg"></div>
+        <div class="btn-row">
+          <button class="btn btn-success" onclick="saveStudent()">💾 Save Student</button>
+          <button class="btn btn-outline" onclick="goTo('menu')">← Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RECORD SEARCH -->
+<div id="screen-record-search" class="screen">
+  <div style="padding-top:5px;">
+    <div class="page-header"><div class="page-header-icon">📋</div><div><h2>STUDENT'S RECORD</h2><p>Search for a student to view details</p></div></div>
+    <div class="page-content">
+      <div class="card" style="max-width:480px;">
+        <div class="form-group"><label>Enter Student ID</label><input type="text" id="rec-sid" placeholder="e.g. 25-12345" onkeydown="if(event.key==='Enter')lookupRec()"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="lookupRec()">🔍 Find Student</button>
+          <button class="btn btn-outline" onclick="goTo('menu')">← Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RECORD VIEW -->
+<div id="screen-record" class="screen">
+  <div style="padding-top:5px;">
+    <div class="page-header"><div class="page-header-icon">📋</div><div><h2>STUDENT'S RECORD</h2><p id="rec-sub">Viewing student details</p></div></div>
+    <div class="page-content">
+      <div class="card">
+        <div class="gwa-box">
+          <div><div class="gwa-lbl">GENERAL WEIGHTED AVERAGE</div><div class="gwa-num" id="rv-gwa">—</div></div>
+          <div class="gwa-rem" id="rv-rem">—</div>
+        </div>
+        <div class="info-grid">
+          <div class="info-block"><div class="info-lbl">Student ID</div><div class="info-val" id="rv-id">—</div></div>
+          <div class="info-block"><div class="info-lbl">Full Name</div><div class="info-val" id="rv-name">—</div></div>
+          <div class="info-block"><div class="info-lbl">Program</div><div class="info-val">BSIT</div></div>
+          <div class="info-block"><div class="info-lbl">Section</div><div class="info-val" id="rv-sec">—</div></div>
+        </div>
+        <div class="sec-label">📚 Subject Grades</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Code</th><th>Subject</th><th>Units</th><th>Grade</th><th>Weighted</th></tr></thead>
+            <tbody id="rv-tbody"></tbody>
+          </table>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-outline" onclick="goTo('list')">← Student List</button>
+          <button class="btn btn-outline" onclick="goTo('menu')">🏠 Main Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- UPDATE SEARCH -->
+<div id="screen-update-search" class="screen">
+  <div style="padding-top:5px;">
+    <div class="page-header"><div class="page-header-icon">✏️</div><div><h2>UPDATE STUDENT</h2><p>Search for a student to update</p></div></div>
+    <div class="page-content">
+      <div class="card" style="max-width:480px;">
+        <div class="form-group"><label>Enter Student ID</label><input type="text" id="upd-sid-search" placeholder="e.g. 25-12345" onkeydown="if(event.key==='Enter')lookupUpd()"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="lookupUpd()">🔍 Find Student</button>
+          <button class="btn btn-outline" onclick="goTo('menu')">← Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- UPDATE FORM -->
+<div id="screen-update" class="screen">
+  <div style="padding-top:5px;">
+    <div class="page-header"><div class="page-header-icon">✏️</div><div><h2>UPDATE STUDENT</h2><p>Edit student information and grades</p></div></div>
+    <div class="page-content">
+      <div class="card">
+        <input type="hidden" id="upd-orig-id">
+        <div class="two-col">
+          <div class="form-group"><label>Full Name</label><input type="text" id="upd-name" placeholder="Enter full name"></div>
+          <div class="form-group"><label>Student ID</label><input type="text" id="upd-id-show" readonly></div>
+          <div class="form-group"><label>Program</label><input type="text" value="BSIT — Bachelor of Science in Information Technology" readonly></div>
+          <div class="form-group"><label>Section</label>
+            <select id="upd-sec"><option value="">-- Select Section --</option><option value="1A">1A</option><option value="1B">1B</option><option value="1C">1C</option></select>
+          </div>
+        </div>
+        <div class="sec-label">📚 Grades in Every Subject</div>
+        <p style="font-size:12px;color:#6b7280;margin-bottom:14px;">College grading: 1.00 (Highest) – 5.00 (Failed).</p>
+        <div class="grade-grid" id="upd-gg"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="doUpdate()">💾 Save &amp; Update</button>
+          <button class="btn btn-outline" onclick="goTo('menu')">← Back to Main Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE -->
+<div id="screen-delete" class="screen">
+  <div style="padding-top:5px;">
+    <div class="page-header" style="background:linear-gradient(135deg,#e74c3c,#c0392b);"><div class="page-header-icon">🗑️</div><div><h2>DELETE STUDENT</h2><p>Remove a student record permanently</p></div></div>
+    <div class="page-content">
+      <div class="card" style="max-width:480px;">
+        <div class="form-group"><label>Enter Student ID</label><input type="text" id="del-sid" placeholder="e.g. 25-12345" onkeydown="if(event.key==='Enter')doDelete()"></div>
+        <div class="warn-box">⚠️ This action cannot be undone. The student record will be permanently deleted.</div>
+        <div class="btn-row">
+          <button class="btn btn-danger" onclick="doDelete()">🗑️ Delete</button>
+          <button class="btn btn-outline" onclick="goTo('menu')">← Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SUBJ=[
+  {code:'CC 101',   name:'Computer Programming',            units:3},
+  {code:'MATH 101', name:'Differential Calculus',           units:4},
+  {code:'CC 100',   name:'Introduction to Computing',       units:3},
+  {code:'GEd 102',  name:'Mathematics in the Modern World', units:3},
+  {code:'PATHFit 1',name:'Movement Competency Training',    units:2},
+  {code:'NSTP',     name:'ROTC/CWTS',                       units:3},
+  {code:'GEd 105',  name:'Readings in Philippine History',  units:3},
+  {code:'GEd 101',  name:'Understanding the Self',          units:3},
+];
+function k(c){return c.replace(/[^a-zA-Z0-9]/g,'_');}
+
+function goTo(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+n).classList.add('active');
+  window.scrollTo(0,0);
+  if(n==='list')loadList();
+  if(n==='add'){buildGG('add-gg',{});document.getElementById('add-name').value='';document.getElementById('add-id').value='';document.getElementById('add-sec').value='';}
+  if(n==='record-search')document.getElementById('rec-sid').value='';
+  if(n==='update-search')document.getElementById('upd-sid-search').value='';
+  if(n==='delete')document.getElementById('del-sid').value='';
+}
+
+function buildGG(id,existing){
+  document.getElementById(id).innerHTML=SUBJ.map(s=>{
+    const kk=k(s.code);const v=existing[kk]||'';
+    return `<div><div class="subj-code">${s.code}</div><div class="subj-name">${s.name}</div><span class="units-b">${s.units} units</span><input type="number" id="${id}-${kk}" placeholder="1.00–5.00" min="1" max="5" step="0.25" value="${v}"></div>`;
+  }).join('');
+}
+
+function getGrades(id){
+  const g={};
+  SUBJ.forEach(s=>{const kk=k(s.code);const el=document.getElementById(id+'-'+kk);if(el&&el.value.trim())g[kk]=el.value.trim();});
+  return g;
+}
+
+async function req(method,url,data){
+  const o={method,headers:{'Content-Type':'application/json'}};
+  if(data)o.body=JSON.stringify(data);
+  const r=await fetch(url,o);
+  return{ok:r.ok,data:await r.json()};
+}
+
+function toast(msg,type='s'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='show t'+type;
+  setTimeout(()=>t.className='',3200);
+}
+
+function mkBadge(r){
+  const m={'PASSED':'badge-passed','FAILED':'badge-failed','N/A':'badge-na'};
+  return `<span class="badge ${m[r]||'badge-na'}">${r}</span>`;
+}
+
+async function loadList(filter=''){
+  const r=await req('GET','/api/students');
+  let rows=r.data;
+  if(filter){const q=filter.toLowerCase();rows=rows.filter(s=>s.name.toLowerCase().includes(q)||s.student_id.toLowerCase().includes(q));}
+  const tb=document.getElementById('list-tbody');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="7"><div class="empty"><div class="empty-icon">👤</div><p>No students found.</p></div></td></tr>';return;}
+  tb.innerHTML=rows.map((s,i)=>`<tr>
+    <td>${i+1}</td>
+    <td><strong>${s.student_id}</strong></td>
+    <td>${s.name}</td>
+    <td><span style="background:#ffe8e8;color:#c0152a;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700;">${s.section}</span></td>
+    <td><strong>${s.gwa?s.gwa.toFixed(4):'—'}</strong></td>
+    <td>${mkBadge(s.remarks)}</td>
+    <td>
+      <button class="btn btn-outline" style="padding:5px 12px;font-size:12px;" onclick="viewRec('${s.student_id}')">View</button>
+      <button class="btn btn-outline" style="padding:5px 12px;font-size:12px;margin-left:4px;" onclick="editRec('${s.student_id}')">Edit</button>
+    </td>
+  </tr>`).join('');
+}
+
+function filterList(){loadList(document.getElementById('list-search').value);}
+
+async function saveStudent(){
+  const name=document.getElementById('add-name').value.trim();
+  const sid=document.getElementById('add-id').value.trim();
+  const sec=document.getElementById('add-sec').value;
+  if(!name){toast('Please enter the student name.','e');return;}
+  if(!sid){toast('Please enter the student ID.','e');return;}
+  if(!sec){toast('Please select a section.','e');return;}
+  const grades=getGrades('add-gg');
+  const r=await req('POST','/api/students',{name,student_id:sid,program:'BSIT',section:sec,grades});
+  if(r.ok){toast('✅ '+name+' added successfully!');goTo('list');}
+  else toast(r.data.error||'Error adding student.','e');
+}
+
+async function lookupRec(){
+  const sid=document.getElementById('rec-sid').value.trim();
+  if(!sid){toast('Please enter a Student ID.','e');return;}
+  await viewRec(sid);
+}
+
+async function viewRec(sid){
+  const r=await req('GET','/api/students/'+encodeURIComponent(sid));
+  if(!r.ok){toast('Student not found. Check the ID and try again.','e');return;}
+  const s=r.data;
+  document.getElementById('rec-sub').textContent='Viewing: '+s.name;
+  document.getElementById('rv-id').textContent=s.student_id;
+  document.getElementById('rv-name').textContent=s.name;
+  document.getElementById('rv-sec').textContent=s.section;
+  document.getElementById('rv-gwa').textContent=s.gwa?s.gwa.toFixed(4):'—';
+  document.getElementById('rv-rem').textContent=s.remarks||'—';
+  document.getElementById('rv-tbody').innerHTML=SUBJ.map(subj=>{
+    const kk=k(subj.code);const grade=s.grades[kk]||'—';
+    const w=grade!=='—'?(parseFloat(grade)*subj.units).toFixed(2):'—';
+    return `<tr><td><strong>${subj.code}</strong></td><td>${subj.name}</td><td style="text-align:center">${subj.units}</td><td style="text-align:center"><strong>${grade}</strong></td><td style="text-align:center">${w}</td></tr>`;
+  }).join('');
+  goTo('record');
+}
+
+async function lookupUpd(){
+  const sid=document.getElementById('upd-sid-search').value.trim();
+  if(!sid){toast('Please enter a Student ID.','e');return;}
+  await editRec(sid);
+}
+
+async function editRec(sid){
+  const r=await req('GET','/api/students/'+encodeURIComponent(sid));
+  if(!r.ok){toast('Student not found.','e');return;}
+  const s=r.data;
+  document.getElementById('upd-orig-id').value=s.student_id;
+  document.getElementById('upd-id-show').value=s.student_id;
+  document.getElementById('upd-name').value=s.name;
+  document.getElementById('upd-sec').value=s.section;
+  buildGG('upd-gg',s.grades);
+  goTo('update');
+}
+
+async function doUpdate(){
+  const sid=document.getElementById('upd-orig-id').value;
+  const name=document.getElementById('upd-name').value.trim();
+  const sec=document.getElementById('upd-sec').value;
+  if(!name){toast('Please enter the student name.','e');return;}
+  if(!sec){toast('Please select a section.','e');return;}
+  const grades=getGrades('upd-gg');
+  const r=await req('PUT','/api/students/'+encodeURIComponent(sid),{name,program:'BSIT',section:sec,grades});
+  if(r.ok){toast('✅ '+name+' updated successfully!');goTo('list');}
+  else toast(r.data.error||'Error updating student.','e');
+}
+
+async function doDelete(){
+  const sid=document.getElementById('del-sid').value.trim();
+  if(!sid){toast('Please enter a Student ID.','e');return;}
+  if(!confirm('Delete student "'+sid+'"? This cannot be undone.'))return;
+  const r=await req('DELETE','/api/students/'+encodeURIComponent(sid));
+  if(r.ok){toast('🗑️ Student "'+sid+'" deleted.');goTo('menu');}
+  else toast(r.data.error||'Student not found.','e');
+}
+
+function exportExcel(){toast('📊 Generating Excel file...');window.location.href='/api/export/excel';}
+
+function exitSys(){
+  if(confirm('Are you sure you want to exit?')){
+    document.body.innerHTML='<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#c0152a,#e63950);color:#fff;font-family:sans-serif;text-align:center;gap:16px;"><div style="font-size:64px;">🎓</div><h2 style="font-size:28px;font-weight:800;">Thank you for using the BSIT Student Record System</h2><p style="opacity:.75;">The application has been closed.</p><button onclick="location.reload()" style="margin-top:16px;padding:12px 28px;background:#fff;color:#c0152a;border:none;border-radius:8px;font-weight:700;font-size:15px;cursor:pointer;">↩ Restart</button></div>';
+  }
+}
+
+buildGG('add-gg',{});
+</script>
+</body>
+</html>
