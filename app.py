@@ -1,12 +1,13 @@
 from flask import Flask, render_template, request, jsonify
-import sqlite3
 import json
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 
-# SQLite database file - saved permanently next to app.py
-DATABASE = os.path.join(os.path.dirname(__file__), 'students.db')
+# PostgreSQL database URL from environment variable
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://student_records_db_zj1k_user:waMNpFTs2YH0yoGtWuYqfV6c7sHTbEfp@dpg-d7urj6brjlhs7397pr40-a/student_records_db_zj1k')
 
 SUBJECTS = [
     {"code": "CC 101",    "name": "Computer Programming",             "units": 3},
@@ -21,15 +22,15 @@ SUBJECTS = [
 
 # ── DATABASE SETUP ──────────────────────────────────────────
 def get_db():
-    """Get a database connection."""
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row  # allows dict-like access
+    """Get a PostgreSQL database connection."""
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
     return conn
 
 def init_db():
     """Create the students table if it doesn't exist."""
     conn = get_db()
-    conn.execute('''
+    cur = conn.cursor()
+    cur.execute('''
         CREATE TABLE IF NOT EXISTS students (
             student_id  TEXT PRIMARY KEY,
             name        TEXT NOT NULL,
@@ -41,8 +42,9 @@ def init_db():
         )
     ''')
     conn.commit()
+    cur.close()
     conn.close()
-    print("✅ Database ready: students.db")
+    print("✅ PostgreSQL Database ready!")
 
 # ── HELPERS ─────────────────────────────────────────────────
 def code_key(code):
@@ -91,7 +93,8 @@ def get_remarks(gwa):
 def row_to_dict(row):
     """Convert a database row to a dictionary."""
     d = dict(row)
-    d['grades'] = json.loads(d['grades'])
+    if isinstance(d['grades'], str):
+        d['grades'] = json.loads(d['grades'])
     return d
 
 # ── ROUTES ──────────────────────────────────────────────────
@@ -106,7 +109,10 @@ def get_subjects():
 @app.route('/api/students', methods=['GET'])
 def get_students():
     conn = get_db()
-    rows = conn.execute('SELECT * FROM students ORDER BY name').fetchall()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM students ORDER BY name')
+    rows = cur.fetchall()
+    cur.close()
     conn.close()
     return jsonify([row_to_dict(r) for r in rows])
 
@@ -131,13 +137,15 @@ def add_student():
 
     try:
         conn = get_db()
-        conn.execute(
-            'INSERT INTO students (student_id, name, program, section, grades, gwa, remarks) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        cur = conn.cursor()
+        cur.execute(
+            'INSERT INTO students (student_id, name, program, section, grades, gwa, remarks) VALUES (%s, %s, %s, %s, %s, %s, %s)',
             (sid, name, prog, sec, json.dumps(grades), gwa, remarks)
         )
         conn.commit()
+        cur.close()
         conn.close()
-    except sqlite3.IntegrityError:
+    except psycopg2.IntegrityError:
         return jsonify({"error": "Student ID already exists"}), 400
 
     return jsonify({
@@ -148,7 +156,10 @@ def add_student():
 @app.route('/api/students/<sid>', methods=['GET'])
 def get_student(sid):
     conn = get_db()
-    row = conn.execute('SELECT * FROM students WHERE student_id = ?', (sid,)).fetchone()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM students WHERE student_id = %s', (sid,))
+    row = cur.fetchone()
+    cur.close()
     conn.close()
     if not row:
         return jsonify({"error": "Student not found"}), 404
@@ -157,8 +168,11 @@ def get_student(sid):
 @app.route('/api/students/<sid>', methods=['PUT'])
 def update_student(sid):
     conn = get_db()
-    row = conn.execute('SELECT * FROM students WHERE student_id = ?', (sid,)).fetchone()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM students WHERE student_id = %s', (sid,))
+    row = cur.fetchone()
     if not row:
+        cur.close()
         conn.close()
         return jsonify({"error": "Student not found"}), 404
 
@@ -171,11 +185,12 @@ def update_student(sid):
     gwa     = compute_gwa(grades)
     remarks = get_remarks(gwa)
 
-    conn.execute(
-        'UPDATE students SET name=?, program=?, section=?, grades=?, gwa=?, remarks=? WHERE student_id=?',
+    cur.execute(
+        'UPDATE students SET name=%s, program=%s, section=%s, grades=%s, gwa=%s, remarks=%s WHERE student_id=%s',
         (name, prog, sec, json.dumps(grades), gwa, remarks, sid)
     )
     conn.commit()
+    cur.close()
     conn.close()
 
     return jsonify({
@@ -186,12 +201,16 @@ def update_student(sid):
 @app.route('/api/students/<sid>', methods=['DELETE'])
 def delete_student(sid):
     conn = get_db()
-    row = conn.execute('SELECT * FROM students WHERE student_id = ?', (sid,)).fetchone()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM students WHERE student_id = %s', (sid,))
+    row = cur.fetchone()
     if not row:
+        cur.close()
         conn.close()
         return jsonify({"error": "Student not found"}), 404
-    conn.execute('DELETE FROM students WHERE student_id = ?', (sid,))
+    cur.execute('DELETE FROM students WHERE student_id = %s', (sid,))
     conn.commit()
+    cur.close()
     conn.close()
     return jsonify({"success": True})
 
@@ -205,7 +224,10 @@ def export_excel():
     from flask import send_file
 
     conn = get_db()
-    rows = conn.execute('SELECT * FROM students ORDER BY program, section, name').fetchall()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM students ORDER BY program, section, name')
+    rows = cur.fetchall()
+    cur.close()
     conn.close()
     students_list = [row_to_dict(r) for r in rows]
 
@@ -397,4 +419,6 @@ def export_excel():
 if __name__ == '__main__':
     init_db()
     print("🎓 Student Record System running at http://127.0.0.1:5000")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
